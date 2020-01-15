@@ -92,10 +92,7 @@ login = """<?xml version="1.0" encoding="UTF-8"?>
             </command>
         </epp>"""
 
-logout = """<?xml version="1.0" encoding="UTF-8"?>
-<epp xmlns="urn:ietf:params:xml:ns:epp-1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-xsi:schemaLocation="urn:ietf:params:xml:ns:epp-1.0 epp-1.0.xsd">
-    <command>
+logout = """<?xml version="1.0" en* as commands
         <logout/>
     </command>
 </epp>"""
@@ -146,3 +143,16 @@ transferstatus = """<?xml version="1.0" encoding="UTF-8" standalone="no"?>
     <clTRID>CHKTEST1</clTRID>
   </command>
 </epp>"""
+
+class commands(object):
+  available = available
+  create = create
+  canceldelete = canceldelete
+  delete = delete
+  info = info
+  login = login
+  logout = logout
+  nameserver = nameserver
+  poll = poll
+  transfer = transfer
+  transferstatus = transferstatus

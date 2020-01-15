@@ -3,9 +3,11 @@ import argparse
 import socket
 import ssl
 import struct
-from BeautifulSoup import BeautifulStoneSoup
-import commands
-from commands import contact
+
+from bs4 import BeautifulSoup as BeautifulStoneSoup
+
+from epp.commands import contact
+from epp.commands.__init__ import commands
 
 
 class EPP:
@@ -14,13 +16,13 @@ class EPP:
         self.config = kwargs
         self.connected = False
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.socket.settimeout(2)
+        self.socket.settimeout(10)
         self.socket.connect((self.config['host'], self.config['port']))
         try:
             self.ssl = ssl.wrap_socket(self.socket)
         except socket.error:
-            print "ERROR: Could not setup a secure connection."
-            print "Check whether your IP is allowed to connect to the host."
+            print("ERROR: Could not setup a secure connection.")
+            print("Check whether your IP is allowed to connect to the host.")
             exit(1)
         self.format_32 = self.format_32()
         self.login()
@@ -33,7 +35,6 @@ class EPP:
             """ Will occur when not properly connected """
             pass
 
-    # http://www.bortzmeyer.org/4934.html
     def format_32(self):
         # Get the size of C integers. We need 32 bits unsigned.
         format_32 = ">I"
@@ -56,14 +57,15 @@ class EPP:
         return struct.pack(self.format_32, value)
 
     def cmd(self, cmd, silent=False):
-        self.write(cmd)
-        soup = BeautifulStoneSoup(self.read())
+        self.write(cmd) 
+        data = self.read()
+        soup = BeautifulStoneSoup(data, 'lxml')
         response = soup.find('response')
         result = soup.find('result')
         try:
             code = int(result.get('code'))
         except AttributeError:
-            print "\nERROR: Could not get result code, exiting."
+            print("\nERROR: Could not get result code, exiting.")
             exit(1)
         if not silent or code not in (1000, 1300, 1500):
             print("- [%d] %s" % (code, result.msg.text))
@@ -77,7 +79,8 @@ class EPP:
         length = self.ssl.read(4)
         if length:
             i = self.int_from_net(length)-4
-            return self.ssl.read(i)
+            res = self.ssl.read(i)
+            return res
 
     def write(self, xml):
         epp_as_string = xml
@@ -85,12 +88,12 @@ class EPP:
         # +2 for the CRLF at the end
         length = self.int_to_net(len(epp_as_string) + 4 + 2)
         self.ssl.send(length)
-        return self.ssl.send(epp_as_string + "\r\n")
+        return self.ssl.send(bytes(epp_as_string + "\r\n", encoding='utf-8'))
 
     def login(self):
         """ Read greeting """
         greeting = self.read()
-        soup = BeautifulStoneSoup(greeting)
+        soup = BeautifulStoneSoup(greeting, 'lxml')
         svid = soup.find('svid')
         version = soup.find('version')
         print("Connected to %s (v%s)\n" % (svid.text, version.text))
